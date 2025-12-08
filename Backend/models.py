@@ -73,3 +73,24 @@ class File(db.Model):
             data['uploaded_by'] = self.uploader.username
             
         return data
+
+class ShareLink(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    token = db.Column(db.String(100), unique=True, nullable=False)
+    repository_id = db.Column(db.Integer, db.ForeignKey('repository.id'), nullable=False)  # Foreign Key
+    permission = db.Column(db.String(20), nullable=False)  # view, edit, admin
+    created_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)  # Foreign Key
+    expires_at = db.Column(db.DateTime)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    repository = db.relationship('Repository')  # Relationship: ShareLink -> Repository
+    creator = db.relationship('User')  # Relationship: ShareLink -> User
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'token': self.token,
+            'repository_id': self.repository_id,
+            'permission': self.permission,
+            'expires_at': self.expires_at.isoformat() if self.expires_at else None,
+            'created_at': self.created_at.isoformat()
+        }
