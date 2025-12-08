@@ -44,3 +44,32 @@ class Repository(db.Model):
             data['meetings'] = [m.to_dict() for m in self.meetings]
             
         return data
+    
+class File(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    filename = db.Column(db.String(255), nullable=False)
+    original_filename = db.Column(db.String(255), nullable=False)
+    file_path = db.Column(db.String(500), nullable=False)
+    file_type = db.Column(db.String(50))
+    file_size = db.Column(db.Integer)
+    repository_id = db.Column(db.Integer, db.ForeignKey('repository.id'), nullable=False)  # Foreign Key
+    uploaded_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)  # Foreign Key
+    tags = db.Column(db.String(500))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    repository = db.relationship('Repository', backref='files')  # Relationship: File -> Repository
+    uploader = db.relationship('User')  # Relationship: File -> User
+    
+    def to_dict(self, include_uploader=False):
+        data = {
+            'id': self.id,
+            'filename': self.original_filename,
+            'file_type': self.file_type,
+            'file_size': self.file_size,
+            'tags': self.tags,
+            'created_at': self.created_at.isoformat()
+        }
+        
+        if include_uploader:
+            data['uploaded_by'] = self.uploader.username
+            
+        return data
