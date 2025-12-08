@@ -94,3 +94,24 @@ class ShareLink(db.Model):
             'expires_at': self.expires_at.isoformat() if self.expires_at else None,
             'created_at': self.created_at.isoformat()
         }
+class Meeting(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    repository_id = db.Column(db.Integer, db.ForeignKey('repository.id'), nullable=False)  # Foreign Key
+    title = db.Column(db.String(200), nullable=False)
+    platform = db.Column(db.String(50))  # zoom, google_meet
+    meeting_url = db.Column(db.String(500))
+    scheduled_at = db.Column(db.DateTime)
+    created_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)  # Foreign Key
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    repository = db.relationship('Repository', backref='meetings')  # Relationship: Meeting -> Repository
+    creator = db.relationship('User')  # Relationship: Meeting -> User
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'title': self.title,
+            'platform': self.platform,
+            'meeting_url': self.meeting_url,
+            'scheduled_at': self.scheduled_at.isoformat() if self.scheduled_at else None,
+            'created_at': self.created_at.isoformat()
+        }
