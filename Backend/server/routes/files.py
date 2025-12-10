@@ -62,7 +62,6 @@ def upload_file(repo_id):
     return jsonify(file_obj.to_dict(include_uploader=True)), 201
 
 @files_bp.route('/files/<int:file_id>/download', methods=['GET'])
-@jwt_required()
 def download_file(file_id):
     file_obj = File.query.get_or_404(file_id)
     directory = os.path.dirname(file_obj.file_path)
