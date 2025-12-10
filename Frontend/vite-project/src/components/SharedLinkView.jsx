@@ -39,6 +39,30 @@ const SharedLinkView = () => {
   }
 };
 
+ const handleDownload = async (fileId, filename) => {
+  try {
+    const response = await fetch(`http://localhost:5000/api/files/${fileId}/download`, {
+      method: 'GET',
+    });
+    
+    if (response.ok) {
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } else {
+      console.error('Download failed');
+    }
+  } catch (error) {
+    console.error('Error downloading file:', error);
+  }
+};
+
   const getFileIcon = (type) => {
     if (type === 'jpg' || type === 'png' || type === 'gif') {
       return <Image className="w-8 h-8 text-green-500" />;
@@ -219,8 +243,11 @@ const SharedLinkView = () => {
                     </p>
                   </div>
                 </div>
-                <button className="p-2 hover:bg-gray-200 rounded-lg transition-colors">
-                  <Download className="w-5 h-5 text-gray-600" />
+                <button 
+                    onClick={() => handleDownload(file.id, file.filename)}
+                    className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
+                    >
+                    <Download className="w-5 h-5 text-gray-600" />
                 </button>
               </div>
             ))}
