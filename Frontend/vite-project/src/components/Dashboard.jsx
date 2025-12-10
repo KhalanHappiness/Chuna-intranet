@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Upload, Share2, Video, Image, Plus, Settings, Users, Calendar, Eye, Edit, Shield, LogOut } from 'lucide-react';
 import { getRepositories, createRepository, getRepository, uploadFile, createShareLink } from '../api';
+import chunaLogo from '../assets/chuna.png'
 
 const Dashboard = ({ onLogout }) => {
   const [repositories, setRepositories] = useState([]);
@@ -91,7 +92,7 @@ const Dashboard = ({ onLogout }) => {
             </button>
             <button
               onClick={handleSubmit}
-              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
             >
               Create
             </button>
@@ -189,7 +190,7 @@ const Dashboard = ({ onLogout }) => {
                 />
                 <button 
                   onClick={() => navigator.clipboard.writeText(shareUrl)}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
                 >
                   Copy
                 </button>
@@ -217,7 +218,7 @@ const Dashboard = ({ onLogout }) => {
             </button>
             <button 
               onClick={handleGenerateLink}
-              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
             >
               Generate Link
             </button>
@@ -268,7 +269,7 @@ const Dashboard = ({ onLogout }) => {
             />
             <label
               htmlFor="fileInput"
-              className="inline-block px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 cursor-pointer"
+              className="inline-block px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 cursor-pointer"
             >
               Browse Files
             </label>
@@ -298,7 +299,7 @@ const Dashboard = ({ onLogout }) => {
             <button 
               onClick={handleUpload}
               disabled={!selectedFile || uploading}
-              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+              className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
             >
               {uploading ? 'Uploading...' : 'Upload'}
             </button>
@@ -311,7 +312,7 @@ const Dashboard = ({ onLogout }) => {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
       </div>
     );
   }
@@ -320,7 +321,11 @@ const Dashboard = ({ onLogout }) => {
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white border-b">
         <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-blue-600">MediaRepo</h1>
+          <img 
+                src={chunaLogo} 
+                alt="Chuna DT Sacco Logo" 
+                className="h-10 sm:h-10 lg:h-14 w-auto hover:opacity-90 transition-opacity"
+            />
           <div className="flex items-center gap-4">
             <button className="p-2 hover:bg-gray-100 rounded-lg">
               <Users className="w-5 h-5" />
@@ -346,7 +351,7 @@ const Dashboard = ({ onLogout }) => {
               <h2 className="text-2xl font-bold">My Repositories</h2>
               <button
                 onClick={() => setShowCreateRepo(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
               >
                 <Plus className="w-4 h-4" />
                 New Repository
@@ -364,8 +369,8 @@ const Dashboard = ({ onLogout }) => {
                   className="bg-white border rounded-lg p-6 hover:shadow-lg transition-shadow cursor-pointer"
                 >
                   <div className="flex items-start justify-between mb-4">
-                    <div className="p-3 bg-blue-100 rounded-lg">
-                      <Image className="w-6 h-6 text-blue-600" />
+                    <div className="p-3 bg-green-100 rounded-lg">
+                      <Image className="w-6 h-6 text-green-600" />
                     </div>
                     <button
                       onClick={(e) => {
@@ -390,7 +395,7 @@ const Dashboard = ({ onLogout }) => {
           <div>
             <button
               onClick={() => setSelectedRepo(null)}
-              className="mb-4 text-blue-600 hover:underline"
+              className="mb-4 text-green-600 hover:underline"
             >
               ← Back to Repositories
             </button>
@@ -403,7 +408,7 @@ const Dashboard = ({ onLogout }) => {
               <div className="flex gap-3">
                 <button
                   onClick={() => setShowUploadModal(true)}
-                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                  className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
                 >
                   <Upload className="w-4 h-4" />
                   Upload

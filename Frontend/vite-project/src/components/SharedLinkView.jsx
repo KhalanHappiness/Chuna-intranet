@@ -41,7 +41,7 @@ const SharedLinkView = () => {
 
   const getFileIcon = (type) => {
     if (type === 'jpg' || type === 'png' || type === 'gif') {
-      return <Image className="w-8 h-8 text-blue-500" />;
+      return <Image className="w-8 h-8 text-green-500" />;
     } else if (type === 'mp4' || type === 'mov' || type === 'avi') {
       return <Video className="w-8 h-8 text-purple-500" />;
     } else {
@@ -51,7 +51,7 @@ const SharedLinkView = () => {
 
   const PermissionBadge = () => {
     const badges = {
-      view: { icon: Eye, text: 'View Only', color: 'bg-blue-100 text-blue-700' },
+      view: { icon: Eye, text: 'View Only', color: 'bg-green-100 text-green-700' },
       edit: { icon: Edit, text: 'Can Edit', color: 'bg-green-100 text-green-700' },
       admin: { icon: Shield, text: 'Admin Access', color: 'bg-purple-100 text-purple-700' }
     };
@@ -99,7 +99,7 @@ const SharedLinkView = () => {
             />
             <label
               htmlFor="fileInput"
-              className="inline-block px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 cursor-pointer"
+              className="inline-block px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 cursor-pointer"
             >
               Browse Files
             </label>
@@ -115,7 +115,7 @@ const SharedLinkView = () => {
             <button 
               onClick={handleUpload}
               disabled={!selectedFile || uploading}
-              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+              className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
             >
               {uploading ? 'Uploading...' : 'Upload'}
             </button>
@@ -129,7 +129,7 @@ const SharedLinkView = () => {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
           <p className="text-gray-600">Loading shared repository...</p>
         </div>
       </div>
@@ -171,12 +171,12 @@ const SharedLinkView = () => {
           </div>
         )}
 
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+        <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
           <div className="flex items-start gap-3">
-            <AlertCircle className="w-5 h-5 text-blue-600 mt-0.5" />
+            <AlertCircle className="w-5 h-5 text-green-600 mt-0.5" />
             <div className="flex-1">
-              <h4 className="font-semibold text-blue-900 mb-1">Shared Repository Access</h4>
-              <p className="text-sm text-blue-800">
+              <h4 className="font-semibold text-green-900 mb-1">Shared Repository Access</h4>
+              <p className="text-sm text-green-800">
                 {permission === 'view' && 'You can view and download files from this repository.'}
                 {permission === 'edit' && 'You can view, download, and upload files to this repository.'}
                 {permission === 'admin' && 'You have full access to manage this repository.'}
@@ -189,7 +189,7 @@ const SharedLinkView = () => {
           <div className="mb-6">
             <button
               onClick={() => setShowUploadModal(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
             >
               <Upload className="w-4 h-4" />
               Upload Files
