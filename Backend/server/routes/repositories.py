@@ -112,7 +112,7 @@ def create_share_link(repo_id):
     
     return jsonify({
         'token': token,
-        'share_url': f"http://localhost:3000/share/{token}",
+        'share_url': f"http://localhost:5173/share/{token}",
         'permission': permission,
         'expires_at': expires_at.isoformat() if expires_at else None
     }), 201
