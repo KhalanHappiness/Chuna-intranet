@@ -19,18 +19,17 @@ def register():
     user = User(
         username=data['username'],
         email=data['email'],
-        password_hash=generate_password_hash(data['password'])
+        password_hash=generate_password_hash(data['password']),
+        is_approved=False
     )
     
     db.session.add(user)
     db.session.commit()
     
-    access_token = create_access_token(identity=user.id)
     
     return jsonify({
-        'message': 'User created successfully',
-        'access_token': access_token,
-        'user': user.to_dict()
+        'message': 'Registration successful! Please wait for admin approval',
+        'pending_approval':True
     }), 201
 
 @auth_bp.route('/login', methods=['POST'])
