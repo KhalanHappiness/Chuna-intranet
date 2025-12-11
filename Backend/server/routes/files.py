@@ -3,7 +3,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from werkzeug.utils import secure_filename
 import os
 import uuid
-from models import Repository, File
+from models import Repository, File, DownloadLog, ShareLink
 from extensions import db
 
 files_bp = Blueprint('files', __name__)
@@ -61,9 +61,25 @@ def upload_file(repo_id):
     
     return jsonify(file_obj.to_dict(include_uploader=True)), 201
 
-@files_bp.route('/files/<int:file_id>/download', methods=['GET'])
+@app.route('/api/files/<int:file_id>/download', methods=['GET'])
 def download_file(file_id):
     file_obj = File.query.get_or_404(file_id)
-    directory = os.path.dirname(file_obj.file_path)
     
+    # Log the download
+    share_token = request.args.get('share_token')
+    share_link = None
+    
+    if share_token:
+        share_link = ShareLink.query.filter_by(token=share_token).first()
+    
+    download_log = DownloadLog(
+        file_id=file_id,
+        share_link_id=share_link.id if share_link else None,
+        repository_id=file_obj.repository_id,
+        ip_address=request.remote_addr
+    )
+    db.session.add(download_log)
+    db.session.commit()
+    
+    directory = os.path.dirname(file_obj.file_path)
     return send_from_directory(directory, file_obj.filename, as_attachment=True, download_name=file_obj.original_filename)
