@@ -6,13 +6,17 @@ class User(db.Model):
     username = db.Column(db.String(80), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(200), nullable=False)
+    role = db.Column(db.String(20), default='user')  # 'user' or 'super_admin'
+    is_approved = db.Column(db.Boolean, default=False)  # NEW: approval status
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
+
     def to_dict(self):
         return {
             'id': self.id,
             'username': self.username,
             'email': self.email,
+            'role': self.role,
+            'is_approved': self.is_approved,
             'created_at': self.created_at.isoformat()
         }
     
