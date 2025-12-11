@@ -81,13 +81,15 @@ class File(db.Model):
 class ShareLink(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     token = db.Column(db.String(100), unique=True, nullable=False)
-    repository_id = db.Column(db.Integer, db.ForeignKey('repository.id'), nullable=False)  # Foreign Key
-    permission = db.Column(db.String(20), nullable=False)  # view, edit, admin
-    created_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)  # Foreign Key
+    repository_id = db.Column(db.Integer, db.ForeignKey('repository.id'), nullable=False)
+    permission = db.Column(db.String(20), nullable=False)
+    created_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     expires_at = db.Column(db.DateTime)
+    is_active = db.Column(db.Boolean, default=True)  # NEW: can be revoked
+    view_count = db.Column(db.Integer, default=0)  # NEW: track views
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    repository = db.relationship('Repository')  # Relationship: ShareLink -> Repository
-    creator = db.relationship('User')  # Relationship: ShareLink -> User
+    repository = db.relationship('Repository')
+    creator = db.relationship('User')
     
     def to_dict(self):
         return {
@@ -96,6 +98,8 @@ class ShareLink(db.Model):
             'repository_id': self.repository_id,
             'permission': self.permission,
             'expires_at': self.expires_at.isoformat() if self.expires_at else None,
+            'is_active': self.is_active,
+            'view_count': self.view_count,
             'created_at': self.created_at.isoformat()
         }
 class Meeting(db.Model):
