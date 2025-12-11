@@ -1,0 +1,157 @@
+from flask import Blueprint, request, jsonify
+from flask_jwt_extended import jwt_required, get_jwt_identity
+from models import db, User, Repository, ShareLink, DownloadLog, AppSettings
+import os
+import uuid
+
+admin_bp = Blueprint('admin', __name__, url_prefix='/api/admin')
+
+# Helper function to check if user is super admin
+def is_super_admin():
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
+    return user and user.role == 'super_admin'
+
+# Get all users (super admin only)
+@admin_bp.route('/users', methods=['GET'])
+@jwt_required()
+def get_all_users():
+    if not is_super_admin():
+        return jsonify({'error': 'Super admin access required'}), 403
+    
+    users = User.query.all()
+    return jsonify([{
+        'id': user.id,
+        'username': user.username,
+        'email': user.email,
+        'role': user.role,
+        'is_approved': user.is_approved,
+        'created_at': user.created_at.isoformat()
+    } for user in users])
+
+# Approve/reject user
+@admin_bp.route('/users/<int:user_id>/approve', methods=['POST'])
+@jwt_required()
+def approve_user(user_id):
+    if not is_super_admin():
+        return jsonify({'error': 'Super admin access required'}), 403
+    
+    user = User.query.get_or_404(user_id)
+    data = request.get_json()
+    
+    user.is_approved = data.get('approved', True)
+    db.session.commit()
+    
+    return jsonify({'message': 'User status updated', 'is_approved': user.is_approved})
+
+# Get all repositories (super admin only)
+@admin_bp.route('/repositories', methods=['GET'])
+@jwt_required()
+def get_all_repositories():
+    if not is_super_admin():
+        return jsonify({'error': 'Super admin access required'}), 403
+    
+    repos = Repository.query.all()
+    return jsonify([{
+        'id': repo.id,
+        'name': repo.name,
+        'description': repo.description,
+        'owner': repo.owner.username,
+        'owner_id': repo.owner_id,
+        'files_count': len(repo.files),
+        'created_at': repo.created_at.isoformat()
+    } for repo in repos])
+
+# Get all share links
+@admin_bp.route('/share-links', methods=['GET'])
+@jwt_required()
+def get_all_share_links():
+    if not is_super_admin():
+        return jsonify({'error': 'Super admin access required'}), 403
+    
+    links = ShareLink.query.all()
+    return jsonify([{
+        'id': link.id,
+        'token': link.token,
+        'repository_name': link.repository.name,
+        'repository_id': link.repository_id,
+        'permission': link.permission,
+        'created_by': link.creator.username,
+        'is_active': link.is_active,
+        'view_count': link.view_count,
+        'expires_at': link.expires_at.isoformat() if link.expires_at else None,
+        'created_at': link.created_at.isoformat()
+    } for link in links])
+
+# Revoke share link
+@admin_bp.route('/share-links/<int:link_id>/revoke', methods=['POST'])
+@jwt_required()
+def revoke_share_link(link_id):
+    if not is_super_admin():
+        return jsonify({'error': 'Super admin access required'}), 403
+    
+    link = ShareLink.query.get_or_404(link_id)
+    link.is_active = False
+    db.session.commit()
+    
+    return jsonify({'message': 'Share link revoked'})
+
+# Get download statistics
+@admin_bp.route('/downloads', methods=['GET'])
+@jwt_required()
+def get_download_stats():
+    if not is_super_admin():
+        return jsonify({'error': 'Super admin access required'}), 403
+    
+    # Get downloads grouped by repository
+    downloads = db.session.query(
+        Repository.id,
+        Repository.name,
+        db.func.count(DownloadLog.id).label('download_count')
+    ).join(
+        DownloadLog, Repository.id == DownloadLog.repository_id
+    ).group_by(Repository.id).all()
+    
+    return jsonify([{
+        'repository_id': repo_id,
+        'repository_name': repo_name,
+        'download_count': count
+    } for repo_id, repo_name, count in downloads])
+
+# Upload logo
+@admin_bp.route('/settings/logo', methods=['POST'])
+@jwt_required()
+def upload_logo():
+    if not is_super_admin():
+        return jsonify({'error': 'Super admin access required'}), 403
+    
+    if 'logo' not in request.files:
+        return jsonify({'error': 'No logo file provided'}), 400
+    
+    logo = request.files['logo']
+    logo_type = request.form.get('type', 'main')  # 'main' or 'login'
+    
+    if logo.filename == '':
+        return jsonify({'error': 'No file selected'}), 400
+    
+    # Save logo
+    filename = f"logo_{logo_type}_{uuid.uuid4()}.png"
+    logo_path = os.path.join('static', 'logos', filename)
+    os.makedirs(os.path.dirname(logo_path), exist_ok=True)
+    logo.save(logo_path)
+    
+    # Save to settings
+    setting = AppSettings.query.filter_by(key=f'logo_{logo_type}').first()
+    if not setting:
+        setting = AppSettings(key=f'logo_{logo_type}', value=filename)
+        db.session.add(setting)
+    else:
+        setting.value = filename
+    
+    db.session.commit()
+    
+    return jsonify({
+        'message': 'Logo uploaded successfully',
+        'filename': filename,
+        'url': f'/static/logos/{filename}'
+    })
