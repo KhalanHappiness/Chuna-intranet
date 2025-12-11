@@ -29,11 +29,13 @@ def create_app():
     from routes.repositories import repositories_bp
     from routes.files import files_bp
     from routes.share import share_bp
+    from routes.admin_routes import admin_bp
     
     app.register_blueprint(auth_bp, url_prefix='/api')
     app.register_blueprint(repositories_bp, url_prefix='/api/repositories')
     app.register_blueprint(files_bp, url_prefix='/api')
     app.register_blueprint(share_bp, url_prefix='/api/share')
+    app.register_blueprint(admin_bp, url_prefix='/api/super_admin')
     
     # Create database tables
     with app.app_context():
