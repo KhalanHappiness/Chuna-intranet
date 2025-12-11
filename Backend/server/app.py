@@ -1,7 +1,7 @@
 from flask import Flask
 from flask_cors import CORS
 import os
-from extensions import db, jwt
+from extensions import db, jwt, migrate
 
 def create_app():
     app = Flask(__name__)
@@ -20,6 +20,8 @@ def create_app():
     # Initialize extensions
     db.init_app(app)
     jwt.init_app(app)
+    migrate.init_app(app, db)  
+
     
     # Create upload folder if it doesn't exist
     os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
@@ -37,9 +39,9 @@ def create_app():
     app.register_blueprint(share_bp, url_prefix='/api/share')
     app.register_blueprint(admin_bp, url_prefix='/api/super_admin')
     
-    # Create database tables
-    with app.app_context():
-        db.create_all()
+    # # Create database tables
+    # with app.app_context():
+    #     db.create_all()
     
     return app
 

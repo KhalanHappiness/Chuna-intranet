@@ -4,7 +4,7 @@ from models import db, User, Repository, ShareLink, DownloadLog, AppSettings
 import os
 import uuid
 
-admin_bp = Blueprint('admin', __name__, url_prefix='/api/admin')
+admin_bp = Blueprint('admin', __name__, url_prefix='/api/super_admin')
 
 # Helper function to check if user is super admin
 def is_super_admin():
