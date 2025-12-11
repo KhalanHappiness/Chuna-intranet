@@ -123,3 +123,23 @@ class Meeting(db.Model):
             'scheduled_at': self.scheduled_at.isoformat() if self.scheduled_at else None,
             'created_at': self.created_at.isoformat()
         }
+    
+# NEW: Track file downloads
+class DownloadLog(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    file_id = db.Column(db.Integer, db.ForeignKey('file.id'), nullable=False)
+    share_link_id = db.Column(db.Integer, db.ForeignKey('share_link.id'), nullable=True)
+    repository_id = db.Column(db.Integer, db.ForeignKey('repository.id'), nullable=False)
+    downloaded_at = db.Column(db.DateTime, default=datetime.utcnow)
+    ip_address = db.Column(db.String(50))
+    file = db.relationship('File')
+    share_link = db.relationship('ShareLink')
+    repository = db.relationship('Repository')
+
+    def to_dict(self):
+        return{
+            'id': self.id,
+            'downloaded_at': self.downloaded_at,
+            'ip_address': self.ip_address,
+            
+        }
