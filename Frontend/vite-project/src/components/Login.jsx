@@ -14,26 +14,20 @@ const Login = ({ onLogin }) => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError('');
-    setLoading(true);
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setError('');
+  setLoading(true);
 
-    try {
-      let response;
-      if (isRegister) {
-        response = await register(formData.username, formData.email, formData.password);
-      } else {
-        response = await login(formData.username, formData.password);
-      }
-
-      onLogin(response.data.access_token);
-    } catch (err) {
-      setError(err.response?.data?.error || 'An error occurred. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
+  try {
+    const response = await login(formData.username, formData.password);
+    onLogin(response.data.access_token, response.data.user); // Pass user data
+  } catch (err) {
+    setError(err.response?.data?.error || 'An error occurred. Please try again.');
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleChange = (e) => {
     setFormData({
