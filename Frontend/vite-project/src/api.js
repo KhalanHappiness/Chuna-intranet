@@ -101,4 +101,47 @@ export const downloadFile = (fileId) => {
   });
 };
 
+
+// Admin - Get all users
+export const getAllUsers = () => {
+  return api.get('/admin/users');
+};
+
+// Admin - Approve user
+export const approveUser = (userId, approved) => {
+  return api.post(`/admin/users/${userId}/approve`, { approved });
+};
+
+// Admin - Get all repositories
+export const getAllRepositories = () => {
+  return api.get('/admin/repositories');
+};
+
+// Admin - Get all share links
+export const getAllShareLinks = () => {
+  return api.get('/admin/share-links');
+};
+
+// Admin - Revoke share link
+export const revokeShareLink = (linkId) => {
+  return api.post(`/admin/share-links/${linkId}/revoke`);
+};
+
+// Admin - Get download stats
+export const getDownloadStats = () => {
+  return api.get('/admin/downloads');
+};
+
+// Admin - Upload logo
+export const uploadLogo = (formData) => {
+  return api.post('/admin/settings/logo', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  });
+};
+
+// Get logos
+export const getLogos = () => {
+  return axios.get(`${API_BASE_URL}/settings/logos`);
+};
+
 export default api;
