@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 import { login, register } from '../api';
-import chunaLogo from '../assets/chuna.png'
+import chunaLogo from '../assets/chuna.png';
+import backgroundImage from '../assets/background.jpg';
 
 const Login = ({ onLogin }) => {
   const [isRegister, setIsRegister] = useState(false);
@@ -14,20 +15,20 @@ const Login = ({ onLogin }) => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  setError('');
-  setLoading(true);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
 
-  try {
-    const response = await login(formData.username, formData.password);
-    onLogin(response.data.access_token, response.data.user); // Pass user data
-  } catch (err) {
-    setError(err.response?.data?.error || 'An error occurred. Please try again.');
-  } finally {
-    setLoading(false);
-  }
-};
+    try {
+      const response = await login(formData.username, formData.password);
+      onLogin(response.data.access_token, response.data.user);
+    } catch (err) {
+      setError(err.response?.data?.error || 'An error occurred. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleChange = (e) => {
     setFormData({
@@ -37,16 +38,23 @@ const handleSubmit = async (e) => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-indigo-100 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
+    <div 
+      className="min-h-screen bg-cover bg-center bg-no-repeat flex items-center justify-center p-4 relative"
+      style={{ backgroundImage: `url(${backgroundImage})` }}
+    >
+      {/* Semi-transparent overlay for better readability */}
+      <div className="absolute inset-0 bg-black/40"></div>
+      
+      {/* Login card */}
+      <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md relative z-10">
         <div className="text-center mb-8">
-           <div className="flex items-center justify-center mb-8">
-          <img 
-            src={chunaLogo} 
-            alt="Chuna DT Sacco Logo" 
-            className="h-10 sm:h-10 lg:h-14 w-auto hover:opacity-90 transition-opacity"
-          />
-        </div>
+          <div className="flex items-center justify-center mb-8">
+            <img 
+              src={chunaLogo} 
+              alt="Chuna DT Sacco Logo" 
+              className="h-10 sm:h-10 lg:h-14 w-auto hover:opacity-90 transition-opacity"
+            />
+          </div>
           <p className="text-gray-600">
             {isRegister ? 'Create your account' : 'Welcome back!'}
           </p>

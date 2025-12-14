@@ -61,25 +61,34 @@ def upload_file(repo_id):
     
     return jsonify(file_obj.to_dict(include_uploader=True)), 201
 
-@files_bp.route('/api/files/<int:file_id>/download', methods=['GET'])
+@files_bp.route('/files/<int:file_id>/download', methods=['GET'])
 def download_file(file_id):
-    file_obj = File.query.get_or_404(file_id)
-    
-    # Log the download
-    share_token = request.args.get('share_token')
-    share_link = None
-    
-    if share_token:
-        share_link = ShareLink.query.filter_by(token=share_token).first()
-    
-    download_log = DownloadLog(
-        file_id=file_id,
-        share_link_id=share_link.id if share_link else None,
-        repository_id=file_obj.repository_id,
-        ip_address=request.remote_addr
-    )
-    db.session.add(download_log)
-    db.session.commit()
-    
-    directory = os.path.dirname(file_obj.file_path)
-    return send_from_directory(directory, file_obj.filename, as_attachment=True, download_name=file_obj.original_filename)
+    try:
+        file_obj = File.query.get_or_404(file_id)
+        
+        # Log the download
+        share_token = request.args.get('share_token')
+        share_link = None
+        
+        if share_token:
+            share_link = ShareLink.query.filter_by(token=share_token).first()
+        
+        download_log = DownloadLog(
+            file_id=file_id,
+            share_link_id=share_link.id if share_link else None,
+            repository_id=file_obj.repository_id,
+            ip_address=request.remote_addr
+        )
+        db.session.add(download_log)
+        db.session.commit()
+        
+        directory = os.path.dirname(file_obj.file_path)
+        return send_from_directory(
+            directory, 
+            file_obj.filename, 
+            as_attachment=True, 
+            download_name=file_obj.original_filename
+        )
+    except Exception as e:
+        print(f"Download error: {e}")
+        return jsonify({'error': 'File not found'}), 404

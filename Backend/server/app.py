@@ -15,7 +15,14 @@ def create_app():
     app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg', 'gif', 'mp4', 'mov', 'avi', 'pdf', 'doc', 'docx'}
     
     # Initialize CORS
-    CORS(app)
+    CORS(app, resources={
+        r"/api/*": {
+            "origins": ["http://localhost:5173", "http://localhost:3000"],
+            "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+            "allow_headers": ["Content-Type", "Authorization"],
+            "supports_credentials": True
+        }
+    })
     
     # Initialize extensions
     db.init_app(app)
@@ -37,8 +44,7 @@ def create_app():
     app.register_blueprint(repositories_bp, url_prefix='/api/repositories')
     app.register_blueprint(files_bp, url_prefix='/api')
     app.register_blueprint(share_bp, url_prefix='/api/share')
-    app.register_blueprint(admin_bp, url_prefix='/api/super_admin')
-    
+    app.register_blueprint(admin_bp)     
     # # Create database tables
     # with app.app_context():
     #     db.create_all()
