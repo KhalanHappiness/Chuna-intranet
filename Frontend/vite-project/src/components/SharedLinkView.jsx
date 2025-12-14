@@ -11,23 +11,33 @@ const SharedLinkView = () => {
   const [permission, setPermission] = useState('view');
   const [error, setError] = useState(null);
   const [showUploadModal, setShowUploadModal] = useState(false);
+  const [showEmailModal, setShowEmailModal] = useState(false);
+  const [email, setEmail] = useState('');
 
   useEffect(() => {
     loadSharedRepository();
   }, [token]);
 
-  const loadSharedRepository = async () => {
-  console.log('Token from URL:', token); // Debug log
-  
-  if (!token) {
-    setError('No share token provided');
-    setLoading(false);
-    return;
-  }
+ const loadSharedRepository = async (userEmail = null) => {
+    if (!token) {
+      setError('No share token provided');
+      setLoading(false);
+      return;
+    }
 
   try {
     console.log('Fetching shared repo with token:', token); // Debug log
-    const response = await getSharedRepository(token);
+    const response = await (userEmail 
+        ? axios.post(`http://localhost:5000/api/share/${token}`, { email: userEmail })
+        : getSharedRepository(token)
+      );
+
+    if (response.data.requires_email && !userEmail) {
+        setShowEmailModal(true);
+        setLoading(false);
+        return;
+      }
+
     console.log('Response:', response.data); // Debug log
     setRepository(response.data);
     setPermission(response.data.permission);
@@ -38,6 +48,35 @@ const SharedLinkView = () => {
     setLoading(false);
   }
 };
+
+const EmailModal = () => (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg p-6 w-full max-w-md">
+        <h3 className="text-xl font-bold mb-4">Enter Your Email</h3>
+        <p className="text-gray-600 mb-4">Please provide your email to access this repository</p>
+        
+        <input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="your.email@example.com"
+          className="w-full p-3 border rounded-lg mb-4"
+        />
+        
+        <button
+          onClick={() => {
+            setShowEmailModal(false);
+            setLoading(true);
+            loadSharedRepository(email);
+          }}
+          disabled={!email}
+          className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+        >
+          Continue
+        </button>
+      </div>
+    </div>
+  );
 
  const handleDownload = async (fileId, filename) => {
   try {
@@ -254,8 +293,10 @@ const SharedLinkView = () => {
           </div>
         </div>
       </div>
-
+      
+      {showEmailModal && <EmailModal />}
       {showUploadModal && <UploadModal />}
+
     </div>
   );
 };
