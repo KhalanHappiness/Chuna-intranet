@@ -254,6 +254,23 @@ def reactivate_share_link(link_id):
     
     return jsonify({'message': 'Share link reactivated', 'is_active': True})
 
+# Get viewers of a specific link
+@admin_bp.route('/share-links/<int:link_id>/viewers', methods=['GET'])
+@jwt_required()
+def get_link_viewers(link_id):
+    if not is_super_admin():
+        return jsonify({'error': 'Super admin access required'}), 403
+    
+    from models import LinkAccessLog
+    viewers = LinkAccessLog.query.filter_by(share_link_id=link_id).order_by(LinkAccessLog.accessed_at.desc()).all()
+    
+    return jsonify([{
+        'id': viewer.id,
+        'email': viewer.email,
+        'ip_address': viewer.ip_address,
+        'accessed_at': viewer.accessed_at.isoformat()
+    } for viewer in viewers])
+
 # Get download statistics
 @admin_bp.route('/downloads', methods=['GET'])
 @jwt_required()
