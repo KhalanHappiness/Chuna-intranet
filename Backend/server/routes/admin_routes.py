@@ -44,6 +44,50 @@ def approve_user(user_id):
     
     return jsonify({'message': 'User status updated', 'is_approved': user.is_approved})
 
+
+# Create new user (super admin only)
+@admin_bp.route('/users/create', methods=['POST'])
+@jwt_required()
+def create_user():
+    if not is_super_admin():
+        return jsonify({'error': 'Super admin access required'}), 403
+    
+    data = request.get_json()
+    
+    # Validate required fields
+    if not data.get('username') or not data.get('email') or not data.get('password'):
+        return jsonify({'error': 'Username, email, and password are required'}), 400
+    
+    # Check if user already exists
+    if User.query.filter_by(username=data['username']).first():
+        return jsonify({'error': 'Username already exists'}), 400
+    
+    if User.query.filter_by(email=data['email']).first():
+        return jsonify({'error': 'Email already exists'}), 400
+    
+    # Create user
+    from werkzeug.security import generate_password_hash
+    user = User(
+        username=data['username'],
+        email=data['email'],
+        password_hash=generate_password_hash(data['password']),
+        role=data.get('role', 'user'),  # Can set role
+        is_approved=True  # Auto-approve admin-created users
+    )
+    
+    db.session.add(user)
+    db.session.commit()
+    
+    return jsonify({
+        'message': 'User created successfully',
+        'user': {
+            'id': user.id,
+            'username': user.username,
+            'email': user.email,
+            'role': user.role
+        }
+    }), 201
+
 # Get all repositories (super admin only)
 @admin_bp.route('/repositories', methods=['GET'])
 @jwt_required()
