@@ -241,6 +241,18 @@ def revoke_share_link(link_id):
     db.session.commit()
     
     return jsonify({'message': 'Share link revoked'})
+# Reactivate share link
+@admin_bp.route('/share-links/<int:link_id>/reactivate', methods=['POST'])
+@jwt_required()
+def reactivate_share_link(link_id):
+    if not is_super_admin():
+        return jsonify({'error': 'Super admin access required'}), 403
+    
+    link = ShareLink.query.get_or_404(link_id)
+    link.is_active = True
+    db.session.commit()
+    
+    return jsonify({'message': 'Share link reactivated', 'is_active': True})
 
 # Get download statistics
 @admin_bp.route('/downloads', methods=['GET'])
