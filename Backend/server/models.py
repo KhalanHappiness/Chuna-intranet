@@ -124,7 +124,6 @@ class Meeting(db.Model):
             'created_at': self.created_at.isoformat()
         }
     
-# NEW: Track file downloads
 class DownloadLog(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     file_id = db.Column(db.Integer, db.ForeignKey('file.id'), nullable=False)
@@ -159,3 +158,12 @@ class AppSettings(db.Model):
             'value': self.value,
             'updated_at':self.updated_at
         }
+    
+class LinkAccessLog(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    share_link_id = db.Column(db.Integer, db.ForeignKey('share_link.id'), nullable=False)
+    email = db.Column(db.String(120))  # Optional email
+    ip_address = db.Column(db.String(50))
+    user_agent = db.Column(db.String(500))
+    accessed_at = db.Column(db.DateTime, default=datetime.utcnow)
+    share_link = db.relationship('ShareLink')
