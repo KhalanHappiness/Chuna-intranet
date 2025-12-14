@@ -106,6 +106,108 @@ def get_all_repositories():
         'created_at': repo.created_at.isoformat()
     } for repo in repos])
 
+# Create repository (super admin)
+@admin_bp.route('/repositories/create', methods=['POST'])
+@jwt_required()
+def create_repository_admin():
+    if not is_super_admin():
+        return jsonify({'error': 'Super admin access required'}), 403
+    
+    data = request.get_json()
+    admin_id = get_jwt_identity()
+    
+    repo = Repository(
+        name=data['name'],
+        description=data.get('description', ''),
+        repo_type=data.get('type', 'general'),
+        owner_id=data.get('owner_id', admin_id)  # Can assign to any user
+    )
+    
+    db.session.add(repo)
+    db.session.commit()
+    
+    return jsonify({
+        'id': repo.id,
+        'name': repo.name,
+        'description': repo.description,
+        'owner_id': repo.owner_id
+    }), 201
+
+# Upload file to any repository (super admin)
+@admin_bp.route('/repositories/<int:repo_id>/upload', methods=['POST'])
+@jwt_required()
+def upload_file_admin(repo_id):
+    if not is_super_admin():
+        return jsonify({'error': 'Super admin access required'}), 403
+    
+    from werkzeug.utils import secure_filename
+    from flask import current_app
+    
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file provided'}), 400
+    
+    file = request.files['file']
+    repo = Repository.query.get_or_404(repo_id)
+    admin_id = get_jwt_identity()
+    
+    if file.filename == '':
+        return jsonify({'error': 'No file selected'}), 400
+    
+    # Generate unique filename
+    original_filename = secure_filename(file.filename)
+    file_ext = original_filename.rsplit('.', 1)[1].lower()
+    unique_filename = f"{uuid.uuid4()}.{file_ext}"
+    
+    # Create repository folder
+    repo_folder = os.path.join(current_app.config['UPLOAD_FOLDER'], str(repo_id))
+    os.makedirs(repo_folder, exist_ok=True)
+    
+    file_path = os.path.join(repo_folder, unique_filename)
+    file.save(file_path)
+    
+    # Save to database
+    from models import File
+    file_obj = File(
+        filename=unique_filename,
+        original_filename=original_filename,
+        file_path=file_path,
+        file_type=file_ext,
+        file_size=os.path.getsize(file_path),
+        repository_id=repo_id,
+        uploaded_by=admin_id,
+        tags=request.form.get('tags', '')
+    )
+    
+    db.session.add(file_obj)
+    db.session.commit()
+    
+    return jsonify({
+        'id': file_obj.id,
+        'filename': file_obj.original_filename,
+        'file_type': file_obj.file_type
+    }), 201
+
+# Delete repository (super admin)
+@admin_bp.route('/repositories/<int:repo_id>', methods=['DELETE'])
+@jwt_required()
+def delete_repository_admin(repo_id):
+    if not is_super_admin():
+        return jsonify({'error': 'Super admin access required'}), 403
+    
+    repo = Repository.query.get_or_404(repo_id)
+    
+    # Delete all files in the repository
+    import shutil
+    repo_folder = os.path.join('uploads', str(repo_id))
+    if os.path.exists(repo_folder):
+        shutil.rmtree(repo_folder)
+    
+    # Delete from database
+    db.session.delete(repo)
+    db.session.commit()
+    
+    return jsonify({'message': 'Repository deleted successfully'}), 200
+
 # Get all share links
 @admin_bp.route('/share-links', methods=['GET'])
 @jwt_required()
