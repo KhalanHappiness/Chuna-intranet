@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Users, FolderOpen, Link2, Download, Settings as SettingsIcon, LogOut, Shield, Check, X, Eye, Trash2 } from 'lucide-react';
+import { Users, FolderOpen, Link2, Download, Settings as SettingsIcon, LogOut, Shield, Check, X, Eye, Trash2, Plus, Upload as UploadIcon, RotateCcw } from 'lucide-react';
 import api from '../api';
 
 const AdminDashboard = ({ onLogout, user }) => {
@@ -10,6 +10,10 @@ const AdminDashboard = ({ onLogout, user }) => {
   const [downloadStats, setDownloadStats] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showLogoModal, setShowLogoModal] = useState(false);
+  const [showCreateUserModal, setShowCreateUserModal] = useState(false);
+  const [showCreateRepoModal, setShowCreateRepoModal] = useState(false);
+  const [showViewersModal, setShowViewersModal] = useState(false);
+  const [selectedLinkViewers, setSelectedLinkViewers] = useState([]);
 
   useEffect(() => {
     loadData();
@@ -63,9 +67,371 @@ const AdminDashboard = ({ onLogout, user }) => {
     }
   };
 
+  const handleReactivateLink = async (linkId) => {
+    try {
+      await api.post(`/admin/share-links/${linkId}/reactivate`);
+      loadData();
+      alert('Link reactivated successfully!');
+    } catch (error) {
+      console.error('Error reactivating link:', error);
+      alert('Failed to reactivate link');
+    }
+  };
+
+  const handleViewLinkViewers = async (linkId) => {
+    try {
+      const response = await api.get(`/admin/share-links/${linkId}/viewers`);
+      setSelectedLinkViewers(response.data);
+      setShowViewersModal(true);
+    } catch (error) {
+      console.error('Error loading viewers:', error);
+      alert('Failed to load viewers');
+    }
+  };
+
+  const handleDeleteRepository = async (repoId) => {
+    if (!window.confirm('Are you sure you want to delete this repository? This will delete all files inside it.')) return;
+    
+    try {
+      await api.delete(`/admin/repositories/${repoId}`);
+      loadData();
+      alert('Repository deleted successfully!');
+    } catch (error) {
+      console.error('Error deleting repository:', error);
+      alert('Failed to delete repository');
+    }
+  };
+
+  // Create User Modal
+  const CreateUserModal = () => {
+    const [formData, setFormData] = useState({
+      username: '',
+      email: '',
+      password: '',
+      role: 'user'
+    });
+    const [creating, setCreating] = useState(false);
+
+    const handleSubmit = async () => {
+      if (!formData.username || !formData.email || !formData.password) {
+        alert('All fields are required');
+        return;
+      }
+
+      setCreating(true);
+      try {
+        await api.post('/admin/users/create', formData);
+        setShowCreateUserModal(false);
+        loadData();
+        alert('User created successfully!');
+      } catch (error) {
+        alert(error.response?.data?.error || 'Failed to create user');
+      } finally {
+        setCreating(false);
+      }
+    };
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white rounded-lg p-6 w-full max-w-md">
+          <h3 className="text-xl font-bold mb-4">Create New User</h3>
+          
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium mb-2">Username</label>
+              <input
+                type="text"
+                value={formData.username}
+                onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                className="w-full p-3 border rounded-lg"
+                placeholder="Enter username"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-2">Email</label>
+              <input
+                type="email"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                className="w-full p-3 border rounded-lg"
+                placeholder="Enter email"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-2">Password</label>
+              <input
+                type="password"
+                value={formData.password}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                className="w-full p-3 border rounded-lg"
+                placeholder="Enter password"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-2">Role</label>
+              <select
+                value={formData.role}
+                onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                className="w-full p-3 border rounded-lg"
+              >
+                <option value="user">User</option>
+                <option value="super_admin">Super Admin</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="flex gap-3 mt-6">
+            <button
+              onClick={() => setShowCreateUserModal(false)}
+              className="flex-1 px-4 py-2 border rounded-lg hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSubmit}
+              disabled={creating}
+              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+            >
+              {creating ? 'Creating...' : 'Create User'}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Create Repository Modal
+  const CreateRepoModal = () => {
+    const [formData, setFormData] = useState({
+      name: '',
+      description: '',
+      type: 'general',
+      owner_id: user.id
+    });
+    const [creating, setCreating] = useState(false);
+
+    const handleSubmit = async () => {
+      if (!formData.name) {
+        alert('Repository name is required');
+        return;
+      }
+
+      setCreating(true);
+      try {
+        await api.post('/admin/repositories/create', formData);
+        setShowCreateRepoModal(false);
+        loadData();
+        alert('Repository created successfully!');
+      } catch (error) {
+        alert(error.response?.data?.error || 'Failed to create repository');
+      } finally {
+        setCreating(false);
+      }
+    };
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white rounded-lg p-6 w-full max-w-md">
+          <h3 className="text-xl font-bold mb-4">Create New Repository</h3>
+          
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium mb-2">Repository Name</label>
+              <input
+                type="text"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                className="w-full p-3 border rounded-lg"
+                placeholder="Enter repository name"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-2">Description</label>
+              <textarea
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                className="w-full p-3 border rounded-lg h-24"
+                placeholder="Enter description (optional)"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-2">Type</label>
+              <select
+                value={formData.type}
+                onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+                className="w-full p-3 border rounded-lg"
+              >
+                <option value="general">General Media</option>
+                <option value="meeting">Meeting Updates</option>
+                <option value="project">Project Files</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="flex gap-3 mt-6">
+            <button
+              onClick={() => setShowCreateRepoModal(false)}
+              className="flex-1 px-4 py-2 border rounded-lg hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSubmit}
+              disabled={creating}
+              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+            >
+              {creating ? 'Creating...' : 'Create Repository'}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Upload File Modal
+  const UploadFileModal = () => {
+    const [selectedFile, setSelectedFile] = useState(null);
+    const [tags, setTags] = useState('');
+    const [uploading, setUploading] = useState(false);
+
+    const handleUpload = async () => {
+      if (!selectedFile) {
+        alert('Please select a file');
+        return;
+      }
+
+      setUploading(true);
+      try {
+        const formData = new FormData();
+        formData.append('file', selectedFile);
+        formData.append('tags', tags);
+
+        await api.post(`/admin/repositories/${selectedRepo.id}/upload`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+
+        setShowUploadModal(false);
+        loadData();
+        alert('File uploaded successfully!');
+      } catch (error) {
+        alert('Failed to upload file');
+      } finally {
+        setUploading(false);
+      }
+    };
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white rounded-lg p-6 w-full max-w-md">
+          <h3 className="text-xl font-bold mb-4">Upload File to {selectedRepo?.name}</h3>
+          
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium mb-2">Select File</label>
+              <input
+                type="file"
+                onChange={(e) => setSelectedFile(e.target.files[0])}
+                className="w-full p-3 border rounded-lg"
+              />
+              {selectedFile && (
+                <p className="text-sm text-gray-600 mt-2">Selected: {selectedFile.name}</p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-2">Tags (optional)</label>
+              <input
+                type="text"
+                value={tags}
+                onChange={(e) => setTags(e.target.value)}
+                className="w-full p-3 border rounded-lg"
+                placeholder="meeting, important, etc."
+              />
+            </div>
+          </div>
+
+          <div className="flex gap-3 mt-6">
+            <button
+              onClick={() => setShowUploadModal(false)}
+              className="flex-1 px-4 py-2 border rounded-lg hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleUpload}
+              disabled={!selectedFile || uploading}
+              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+            >
+              {uploading ? 'Uploading...' : 'Upload'}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Viewers Modal
+  const ViewersModal = () => (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg p-6 w-full max-w-2xl">
+        <h3 className="text-xl font-bold mb-4">Link Viewers</h3>
+        
+        <div className="max-h-96 overflow-y-auto">
+          {selectedLinkViewers.length > 0 ? (
+            <table className="w-full">
+              <thead className="bg-gray-50 sticky top-0">
+                <tr>
+                  <th className="px-4 py-2 text-left text-sm font-semibold">Email</th>
+                  <th className="px-4 py-2 text-left text-sm font-semibold">IP Address</th>
+                  <th className="px-4 py-2 text-left text-sm font-semibold">Accessed At</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y">
+                {selectedLinkViewers.map((viewer) => (
+                  <tr key={viewer.id}>
+                    <td className="px-4 py-3">{viewer.email || 'Anonymous'}</td>
+                    <td className="px-4 py-3 text-sm text-gray-500">{viewer.ip_address}</td>
+                    <td className="px-4 py-3 text-sm text-gray-500">
+                      {new Date(viewer.accessed_at).toLocaleString()}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <p className="text-center text-gray-500 py-8">No viewers yet</p>
+          )}
+        </div>
+
+        <div className="mt-6">
+          <button
+            onClick={() => setShowViewersModal(false)}
+            className="w-full px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
   const UsersTab = () => (
     <div className="space-y-4">
-      <h3 className="text-xl font-bold mb-4">User Management</h3>
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="text-xl font-bold">User Management</h3>
+        <button
+          onClick={() => setShowCreateUserModal(true)}
+          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+        >
+          <Plus className="w-4 h-4" />
+          Create User
+        </button>
+      </div>
       
       {/* Pending Approvals */}
       <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
@@ -105,7 +471,7 @@ const AdminDashboard = ({ onLogout, user }) => {
       {/* All Users */}
       <div className="bg-white rounded-lg border">
         <div className="p-4 border-b">
-          <h4 className="font-semibold">All Users</h4>
+          <h4 className="font-semibold">All Users ({users.filter(u => u.is_approved).length})</h4>
         </div>
         <div className="divide-y">
           {users.filter(u => u.is_approved).map(user => (
@@ -142,13 +508,17 @@ const AdminDashboard = ({ onLogout, user }) => {
     </div>
   );
 
-  const RepositoriesTab = () => (
+const RepositoriesTab = () => (
     <div className="space-y-4">
       <div className="flex justify-between items-center mb-4">
         <h3 className="text-xl font-bold">All Repositories</h3>
-        <div className="text-sm text-gray-500">
-          Total: {repositories.length} repositories
-        </div>
+        <button
+          onClick={() => setShowCreateRepoModal(true)}
+          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+        >
+          <Plus className="w-4 h-4" />
+          Create Repository
+        </button>
       </div>
 
       <div className="grid grid-cols-3 gap-6">
@@ -157,6 +527,25 @@ const AdminDashboard = ({ onLogout, user }) => {
             <div className="flex items-start justify-between mb-4">
               <div className="p-3 bg-blue-100 rounded-lg">
                 <FolderOpen className="w-6 h-6 text-blue-600" />
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => {
+                    setSelectedRepo(repo);
+                    setShowUploadModal(true);
+                  }}
+                  className="p-2 hover:bg-blue-50 rounded-lg"
+                  title="Upload files"
+                >
+                  <UploadIcon className="w-4 h-4 text-blue-600" />
+                </button>
+                <button
+                  onClick={() => handleDeleteRepository(repo.id)}
+                  className="p-2 hover:bg-red-50 rounded-lg"
+                  title="Delete repository"
+                >
+                  <Trash2 className="w-4 h-4 text-red-600" />
+                </button>
               </div>
             </div>
             <h3 className="text-lg font-semibold mb-2">{repo.name}</h3>
@@ -174,7 +563,7 @@ const AdminDashboard = ({ onLogout, user }) => {
     </div>
   );
 
-  const ShareLinksTab = () => (
+   const ShareLinksTab = () => (
     <div className="space-y-4">
       <div className="flex justify-between items-center mb-4">
         <h3 className="text-xl font-bold">Share Links Management</h3>
@@ -233,15 +622,33 @@ const AdminDashboard = ({ onLogout, user }) => {
                     {new Date(link.created_at).toLocaleDateString()}
                   </td>
                   <td className="px-4 py-3">
-                    {link.is_active && (
+                    <div className="flex gap-2">
                       <button
-                        onClick={() => handleRevokeLink(link.id)}
-                        className="flex items-center gap-1 px-3 py-1 text-sm bg-red-600 text-white rounded hover:bg-red-700"
+                        onClick={() => handleViewLinkViewers(link.id)}
+                        className="flex items-center gap-1 px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
+                        title="View who accessed this link"
                       >
-                        <X className="w-3 h-3" />
-                        Revoke
+                        <Eye className="w-3 h-3" />
+                        Viewers
                       </button>
-                    )}
+                      {link.is_active ? (
+                        <button
+                          onClick={() => handleRevokeLink(link.id)}
+                          className="flex items-center gap-1 px-3 py-1 text-sm bg-red-600 text-white rounded hover:bg-red-700"
+                        >
+                          <X className="w-3 h-3" />
+                          Revoke
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => handleReactivateLink(link.id)}
+                          className="flex items-center gap-1 px-3 py-1 text-sm bg-green-600 text-white rounded hover:bg-green-700"
+                        >
+                          <RotateCcw className="w-3 h-3" />
+                          Reactivate
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -454,6 +861,8 @@ const AdminDashboard = ({ onLogout, user }) => {
       </div>
 
       {showLogoModal && <LogoModal />}
+      {showCreateUserModal && <CreateUserModal />}
+      {showViewersModal && <ViewersModal />}
     </div>
   );
 };
