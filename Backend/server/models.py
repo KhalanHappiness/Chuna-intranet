@@ -167,3 +167,13 @@ class LinkAccessLog(db.Model):
     user_agent = db.Column(db.String(500))
     accessed_at = db.Column(db.DateTime, default=datetime.utcnow)
     share_link = db.relationship('ShareLink')
+
+    def to_dict(self):
+
+        return{
+            'id': self.id,
+            'email': self.email,
+            'ip_address':self.ip_address,
+            'user_agent':self.user_agent,
+            'accessed_at':self.accessed_at
+        }
