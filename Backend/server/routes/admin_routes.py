@@ -3,6 +3,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from models import db, User, Repository, ShareLink, DownloadLog, AppSettings
 import os
 import uuid
+import shutil
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/api/admin')
 
@@ -194,19 +195,58 @@ def delete_repository_admin(repo_id):
     if not is_super_admin():
         return jsonify({'error': 'Super admin access required'}), 403
     
-    repo = Repository.query.get_or_404(repo_id)
-    
-    # Delete all files in the repository
-    import shutil
-    repo_folder = os.path.join('uploads', str(repo_id))
-    if os.path.exists(repo_folder):
-        shutil.rmtree(repo_folder)
-    
-    # Delete from database
-    db.session.delete(repo)
-    db.session.commit()
-    
-    return jsonify({'message': 'Repository deleted successfully'}), 200
+    try:
+        repo = Repository.query.get_or_404(repo_id)
+        
+        # Import models
+        from models import File, ShareLink, Meeting, DownloadLog, LinkAccessLog
+        
+        # Delete in correct order (most dependent first)
+        
+        # 1. Delete LinkAccessLog entries
+        LinkAccessLog.query.filter(
+            LinkAccessLog.share_link_id.in_(
+                db.session.query(ShareLink.id).filter_by(repository_id=repo_id)
+            )
+        ).delete(synchronize_session=False)
+        
+        # 2. Delete DownloadLog entries
+        DownloadLog.query.filter_by(repository_id=repo_id).delete(synchronize_session=False)
+        
+        # 3. Delete ShareLink entries
+        ShareLink.query.filter_by(repository_id=repo_id).delete(synchronize_session=False)
+        
+        # 4. Delete Meeting entries
+        Meeting.query.filter_by(repository_id=repo_id).delete(synchronize_session=False)
+        
+        # 5. Delete File entries
+        File.query.filter_by(repository_id=repo_id).delete(synchronize_session=False)
+        
+        # Commit these deletions first
+        db.session.commit()
+        
+        # Delete physical files from disk
+        from flask import current_app
+        repo_folder = os.path.join(current_app.config['UPLOAD_FOLDER'], str(repo_id))
+        if os.path.exists(repo_folder):
+            try:
+                shutil.rmtree(repo_folder)
+                print(f"Deleted folder: {repo_folder}")
+            except Exception as e:
+                print(f"Warning: Could not delete folder {repo_folder}: {e}")
+        
+        # Finally delete the repository itself
+        db.session.delete(repo)
+        db.session.commit()
+        
+        return jsonify({'message': 'Repository deleted successfully'}), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error deleting repository: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': f'Failed to delete repository: {str(e)}'}), 500
 
 # Get all share links
 @admin_bp.route('/share-links', methods=['GET'])
