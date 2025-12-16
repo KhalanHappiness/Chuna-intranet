@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { Download, Upload, Eye, Edit, Shield, AlertCircle, Image, Video, FileText } from 'lucide-react';
 import { getSharedRepository, uploadFile } from '../api';
+import axios from 'axios';
 
 const SharedLinkView = () => {
   const { token } = useParams();
@@ -32,7 +33,7 @@ const SharedLinkView = () => {
         : getSharedRepository(token)
       );
 
-    if (response.data.requires_email && !userEmail) {
+    if (response.data?.requires_email && !userEmail) {
         setShowEmailModal(true);
         setLoading(false);
         return;
@@ -210,6 +211,10 @@ const EmailModal = () => (
       </div>
     );
   }
+
+if (!repository) {
+return showEmailModal ? <EmailModal /> : null;
+}
 
   return (
     <div className="min-h-screen bg-gray-50">

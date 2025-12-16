@@ -427,13 +427,19 @@ const Dashboard = ({ onLogout }) => {
                 {Array.isArray(selectedRepo.files) && selectedRepo.files.length > 0 ? (
                     selectedRepo.files.map((file) => (
                     <div key={file.id} className="border rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
-                        <div className="aspect-square bg-gray-200 flex items-center justify-center">
-                        {file.file_type === 'jpg' || file.file_type === 'png' ? (
-                            <Image className="w-12 h-12 text-gray-400" />
+                      <div className="aspect-square bg-gray-200 flex items-center justify-center overflow-hidden">
+                        {file.file_type === 'jpg' || file.file_type === 'png' || file.file_type === 'jpeg' ? (
+                          <img 
+                            src={`http://localhost:5000/api/files/${file.id}/download`}
+                            alt={file.filename}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : file.file_type === 'mp4' || file.file_type === 'mov' ? (
+                          <Video className="w-12 h-12 text-gray-400" />
                         ) : (
-                            <Video className="w-12 h-12 text-gray-400" />
+                          <Image className="w-12 h-12 text-gray-400" />
                         )}
-                        </div>
+                      </div>
                         <div className="p-3">
                         <p className="text-sm font-medium truncate">{file.filename}</p>
                         <p className="text-xs text-gray-500">{file.created_at}</p>

@@ -14,6 +14,9 @@ const AdminDashboard = ({ onLogout, user }) => {
   const [showCreateRepoModal, setShowCreateRepoModal] = useState(false);
   const [showViewersModal, setShowViewersModal] = useState(false);
   const [selectedLinkViewers, setSelectedLinkViewers] = useState([]);
+  const [selectedRepo, setSelectedRepo] = useState(null);
+  const [showUploadModal, setShowUploadModal] = useState(false);
+
 
   useEffect(() => {
     loadData();
@@ -863,6 +866,9 @@ const RepositoriesTab = () => (
       {showLogoModal && <LogoModal />}
       {showCreateUserModal && <CreateUserModal />}
       {showViewersModal && <ViewersModal />}
+      {showUploadModal && <UploadFileModal />}
+      {showCreateRepoModal && <CreateRepoModal/>}
+
     </div>
   );
 };
