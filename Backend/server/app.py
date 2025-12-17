@@ -1,7 +1,7 @@
 from flask import Flask
 from flask_cors import CORS
 import os
-from extensions import db, jwt, migrate
+from server.extensions import db, jwt, migrate
 
 def create_app():
     app = Flask(__name__)
