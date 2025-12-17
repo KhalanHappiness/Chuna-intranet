@@ -5,9 +5,17 @@ from extensions import db, jwt, migrate
 
 def create_app():
     app = Flask(__name__)
+
+    #Database configuration
+    database_url = os.environ.get('DATABASE_URL', 'sqlite:///mediarepo.db')
+
+    # Fix for Render PostgreSQL URL (postgres:// -> postgresql://)
+    if database_url.startswith('postgres://'):
+        database_url = database_url.replace('postgres://', 'postgresql://', 1)
+
     
     # Configuration
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///mediarepo.db'
+    app.config['SQLALCHEMY_DATABASE_URI'] = database_url
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['JWT_SECRET_KEY'] = 'your-secret-key-change-in-production'
     app.config['UPLOAD_FOLDER'] = 'uploads'
@@ -15,9 +23,11 @@ def create_app():
     app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg', 'gif', 'mp4', 'mov', 'avi', 'pdf', 'doc', 'docx'}
     
     # Initialize CORS
+    frontend_url = os.environ.get('FRONTEND_URL', 'http://localhost:5173')
+
     CORS(app, resources={
         r"/api/*": {
-            "origins": ["http://localhost:5173", "http://localhost:3000"],
+            "origins": [frontend_url, "http://localhost:5173", "http://localhost:3000"],
             "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
             "allow_headers": ["Content-Type", "Authorization"],
             "supports_credentials": True
