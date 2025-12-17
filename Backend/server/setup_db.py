@@ -1,6 +1,6 @@
 from app import create_app
-from models import User
-from extensions import db
+from server.models import User
+from server.extensions import db
 from werkzeug.security import generate_password_hash
 
 def setup_superadmin():
