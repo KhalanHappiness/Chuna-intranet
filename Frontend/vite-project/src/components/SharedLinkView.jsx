@@ -29,7 +29,7 @@ const SharedLinkView = () => {
   try {
     console.log('Fetching shared repo with token:', token); // Debug log
     const response = await (userEmail 
-        ? axios.post(`http://localhost:5000/api/share/${token}`, { email: userEmail })
+        ? axios.post(`https://chuna-intranet.onrender.com/api/share/${token}`, { email: userEmail })
         : getSharedRepository(token)
       );
 
@@ -81,7 +81,7 @@ const EmailModal = () => (
 
  const handleDownload = async (fileId, filename) => {
   try {
-    const response = await fetch(`http://localhost:5000/api/files/${fileId}/download`, {
+    const response = await fetch(`https://chuna-intranet.onrender.com/api/files/${fileId}/download`, {
       method: 'GET',
     });
     
