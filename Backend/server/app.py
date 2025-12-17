@@ -44,11 +44,11 @@ def create_app():
     os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
     
     # Register blueprints
-    from routes.auth import auth_bp
-    from routes.repositories import repositories_bp
-    from routes.files import files_bp
-    from routes.share import share_bp
-    from routes.admin_routes import admin_bp
+    from server.routes.auth import auth_bp
+    from server.routes.repositories import repositories_bp
+    from server.routes.files import files_bp
+    from server.routes.share import share_bp
+    from server.routes.admin_routes import admin_bp
     
     app.register_blueprint(auth_bp, url_prefix='/api')
     app.register_blueprint(repositories_bp, url_prefix='/api/repositories')
