@@ -2,8 +2,8 @@ from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from datetime import datetime, timedelta
 import secrets
-from models import Repository, ShareLink, Meeting, User
-from extensions import db
+from server.models import Repository, ShareLink, Meeting, User
+from server.extensions import db
 
 repositories_bp = Blueprint('repositories', __name__)
 

@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify,  request
 from datetime import datetime
-from models import ShareLink, LinkAccessLog
-from extensions import db
+from server.models import ShareLink, LinkAccessLog
+from server.extensions import db
 
 
 share_bp = Blueprint('share', __name__)

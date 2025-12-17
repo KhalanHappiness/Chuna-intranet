@@ -3,8 +3,8 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from werkzeug.utils import secure_filename
 import os
 import uuid
-from models import Repository, File, DownloadLog, ShareLink
-from extensions import db
+from server.models import Repository, File, DownloadLog, ShareLink
+from server.extensions import db
 
 files_bp = Blueprint('files', __name__)
 
