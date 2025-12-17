@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from datetime import datetime, timedelta
 import secrets
-from models import Repository, ShareLink, Meeting
+from models import Repository, ShareLink, Meeting, User
 from extensions import db
 
 repositories_bp = Blueprint('repositories', __name__)
@@ -51,9 +51,10 @@ def create_repository():
 def get_repository(repo_id):
     user_id = get_jwt_identity()
     repo = Repository.query.get_or_404(repo_id)
-    
+    user = User.query.get(user_id)
+
     # Check if user has access
-    if repo.owner_id != user_id:
+    if repo.owner_id != user_id and user.role != 'super_admin':
         return jsonify({'error': 'Access denied'}), 403
     
     return jsonify({

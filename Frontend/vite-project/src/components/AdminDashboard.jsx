@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Users, FolderOpen, Link2, Download, Settings as SettingsIcon, LogOut, Shield, Check, X, Eye, Trash2, Plus, Upload as UploadIcon, RotateCcw } from 'lucide-react';
+import { Users, FolderOpen, Link2, Download, Settings as SettingsIcon, LogOut, Shield, Check, X, Eye, Trash2, Plus, Upload as UploadIcon, RotateCcw, Video, Image } from 'lucide-react';
+
 import api from '../api';
 
 const AdminDashboard = ({ onLogout, user }) => {
@@ -511,7 +512,177 @@ const AdminDashboard = ({ onLogout, user }) => {
     </div>
   );
 
-const RepositoriesTab = () => (
+const RepositoriesTab = () => {
+  const [viewingRepo, setViewingRepo] = useState(null);
+  const [repoFiles, setRepoFiles] = useState([]);
+  const [loadingFiles, setLoadingFiles] = useState(false);
+
+  const handleViewRepository = async (repo) => {
+    setViewingRepo(repo);
+    setLoadingFiles(true);
+    try {
+      const response = await api.get(`/repositories/${repo.id}`);
+      setRepoFiles(response.data.files || []);
+    } catch (error) {
+      console.error('Error loading repository files:', error);
+      setRepoFiles([]);
+    } finally {
+      setLoadingFiles(false);
+    }
+  };
+
+  const handleDownload = async (fileId, filename) => {
+    try {
+      const response = await fetch(`http://localhost:5000/api/files/${fileId}/download`, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+      
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      }
+    } catch (error) {
+      console.error('Error downloading file:', error);
+    }
+  };
+
+  const handleDeleteFile = async (fileId) => {
+    if (!window.confirm('Are you sure you want to delete this file?')) return;
+    
+    try {
+      await api.delete(`/files/${fileId}`);
+      handleViewRepository(viewingRepo); // Reload files
+      alert('File deleted successfully!');
+    } catch (error) {
+      console.error('Error deleting file:', error);
+      alert('Failed to delete file');
+    }
+  };
+
+  if (viewingRepo) {
+    return (
+      <div className="space-y-4">
+        <button
+          onClick={() => setViewingRepo(null)}
+          className="text-blue-600 hover:text-blue-700 font-medium flex items-center gap-2"
+        >
+          ← Back to All Repositories
+        </button>
+
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h3 className="text-2xl font-bold">{viewingRepo.name}</h3>
+            <p className="text-gray-600">{viewingRepo.description}</p>
+            <p className="text-sm text-gray-500 mt-1">
+              Owner: {viewingRepo.owner} • {repoFiles.length} files
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={() => {
+                setSelectedRepo(viewingRepo);
+                setShowUploadModal(true);
+              }}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            >
+              <UploadIcon className="w-4 h-4" />
+              Upload Files
+            </button>
+            <button
+              onClick={() => handleDeleteRepository(viewingRepo.id)}
+              className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+            >
+              <Trash2 className="w-4 h-4" />
+              Delete Repository
+            </button>
+          </div>
+        </div>
+
+        {loadingFiles ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          </div>
+        ) : repoFiles.length > 0 ? (
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+            {repoFiles.map((file) => (
+              <div key={file.id} className="group relative border rounded-lg overflow-hidden hover:shadow-lg transition-shadow bg-white">
+                <div className="aspect-square bg-gray-100 flex items-center justify-center overflow-hidden relative">
+                  {file.file_type === 'jpg' || file.file_type === 'png' || file.file_type === 'jpeg' ? (
+                    <img 
+                      src={`http://localhost:5000/api/files/${file.id}/download`}
+                      alt={file.original_filename}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : file.file_type === 'mp4' || file.file_type === 'mov' ? (
+                    <Video className="w-12 h-12 text-gray-400" />
+                  ) : (
+                    <Image className="w-12 h-12 text-gray-400" />
+                  )}
+                  
+                  {/* Hover overlay with actions */}
+                  <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
+                    <button
+                      onClick={() => handleDownload(file.id, file.original_filename)}
+                      className="p-2 bg-white rounded-full hover:bg-gray-100 transition-colors"
+                      title="Download"
+                    >
+                      <Download className="w-4 h-4 text-gray-700" />
+                    </button>
+                    <button
+                      onClick={() => handleDeleteFile(file.id)}
+                      className="p-2 bg-white rounded-full hover:bg-red-50 transition-colors"
+                      title="Delete"
+                    >
+                      <Trash2 className="w-4 h-4 text-red-600" />
+                    </button>
+                  </div>
+                </div>
+                <div className="p-3">
+                  <p className="text-sm font-medium truncate text-gray-900" title={file.original_filename}>
+                    {file.original_filename}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {file.file_size ? `${(file.file_size / 1024 / 1024).toFixed(2)} MB` : 'Unknown size'}
+                  </p>
+                  {file.tags && (
+                    <p className="text-xs text-blue-600 mt-1">{file.tags}</p>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-16 bg-white rounded-lg border">
+            <UploadIcon className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">No files in this repository</h3>
+            <p className="text-gray-600 mb-6">Upload files to get started</p>
+            <button
+              onClick={() => {
+                setSelectedRepo(viewingRepo);
+                setShowUploadModal(true);
+              }}
+              className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              <UploadIcon className="w-5 h-5" />
+              <span className="font-medium">Upload Files</span>
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  return (
     <div className="space-y-4">
       <div className="flex justify-between items-center mb-4">
         <h3 className="text-xl font-bold">All Repositories</h3>
@@ -526,14 +697,18 @@ const RepositoriesTab = () => (
 
       <div className="grid grid-cols-3 gap-6">
         {repositories.map(repo => (
-          <div key={repo.id} className="bg-white border rounded-lg p-6 hover:shadow-lg transition-shadow">
+          <div key={repo.id} className="bg-white border rounded-lg p-6 hover:shadow-lg transition-shadow cursor-pointer group">
             <div className="flex items-start justify-between mb-4">
-              <div className="p-3 bg-blue-100 rounded-lg">
+              <div 
+                className="p-3 bg-blue-100 rounded-lg flex-1"
+                onClick={() => handleViewRepository(repo)}
+              >
                 <FolderOpen className="w-6 h-6 text-blue-600" />
               </div>
               <div className="flex gap-2">
                 <button
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.stopPropagation();
                     setSelectedRepo(repo);
                     setShowUploadModal(true);
                   }}
@@ -543,7 +718,10 @@ const RepositoriesTab = () => (
                   <UploadIcon className="w-4 h-4 text-blue-600" />
                 </button>
                 <button
-                  onClick={() => handleDeleteRepository(repo.id)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDeleteRepository(repo.id);
+                  }}
                   className="p-2 hover:bg-red-50 rounded-lg"
                   title="Delete repository"
                 >
@@ -551,20 +729,23 @@ const RepositoriesTab = () => (
                 </button>
               </div>
             </div>
-            <h3 className="text-lg font-semibold mb-2">{repo.name}</h3>
-            <p className="text-sm text-gray-600 mb-3 line-clamp-2">{repo.description}</p>
-            <div className="flex items-center justify-between text-sm text-gray-500">
-              <span>{repo.files_count} files</span>
-              <span>Owner: {repo.owner}</span>
-            </div>
-            <div className="text-xs text-gray-400 mt-2">
-              Created {new Date(repo.created_at).toLocaleDateString()}
+            <div onClick={() => handleViewRepository(repo)}>
+              <h3 className="text-lg font-semibold mb-2">{repo.name}</h3>
+              <p className="text-sm text-gray-600 mb-3 line-clamp-2">{repo.description}</p>
+              <div className="flex items-center justify-between text-sm text-gray-500">
+                <span>{repo.files_count} files</span>
+                <span>Owner: {repo.owner}</span>
+              </div>
+              <div className="text-xs text-gray-400 mt-2">
+                Created {new Date(repo.created_at).toLocaleDateString()}
+              </div>
             </div>
           </div>
         ))}
       </div>
     </div>
   );
+};
 
    const ShareLinksTab = () => (
     <div className="space-y-4">
