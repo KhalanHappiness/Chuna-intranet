@@ -7,7 +7,7 @@ def create_app():
     # Fix: Go up TWO levels from server/app.py to get to project root
     # server/app.py -> server -> Backend -> project root
     BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
-    FRONTEND_DIST = os.path.join(BASE_DIR, 'Frontend', 'dist')
+    FRONTEND_DIST = os.path.join(BASE_DIR, 'Frontend', 'vite-project', 'dist')
     
     app = Flask(__name__, 
                 static_folder=FRONTEND_DIST,
