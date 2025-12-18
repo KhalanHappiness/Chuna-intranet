@@ -4,8 +4,9 @@ import os
 from server.extensions import db, jwt, migrate
 
 def create_app():
-    # Get absolute path to Frontend dist
-    BASE_DIR = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
+    # Fix: Go up TWO levels from server/app.py to get to project root
+    # server/app.py -> server -> Backend -> project root
+    BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
     FRONTEND_DIST = os.path.join(BASE_DIR, 'Frontend', 'dist')
     
     app = Flask(__name__, 
@@ -60,6 +61,7 @@ def create_app():
     app.register_blueprint(admin_bp)
     
     # Debug logging
+    print(f"BASE_DIR: {BASE_DIR}")
     print(f"Static folder: {app.static_folder}")
     print(f"Static folder exists: {os.path.exists(app.static_folder) if app.static_folder else False}")
     if app.static_folder and os.path.exists(app.static_folder):
@@ -69,6 +71,9 @@ def create_app():
     @app.route('/', defaults={'path': ''})
     @app.route('/<path:path>')
     def serve(path):
+        if not app.static_folder or not os.path.exists(app.static_folder):
+            return {'error': 'Frontend not built'}, 500
+            
         # Serve static files if they exist
         if path and os.path.exists(os.path.join(app.static_folder, path)):
             return send_from_directory(app.static_folder, path)
