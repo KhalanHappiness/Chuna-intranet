@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'https://chuna-intranet.onrender.com';
+// Use environment variable, fallback to production URL
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://chuna-intranet.onrender.com/api';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -100,7 +101,6 @@ export const downloadFile = (fileId) => {
     responseType: 'blob',
   });
 };
-
 
 // Admin - Get all users
 export const getAllUsers = () => {
