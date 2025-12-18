@@ -1,19 +1,12 @@
-from flask import Flask, send_from_directory
+from flask import Flask, jsonify
 from flask_cors import CORS
 import os
-from server.extensions import db, jwt, migrate
+from server.extensions import db, jwt, migrate  # ✅ Remove 'server.'
 
 def create_app():
-    # Fix: Go up TWO levels from server/app.py to get to project root
-    # server/app.py -> server -> Backend -> project root
-    BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
-    FRONTEND_DIST = os.path.join(BASE_DIR, 'Frontend', 'vite-project', 'dist')
-    
-    app = Flask(__name__, 
-                static_folder=FRONTEND_DIST,
-                static_url_path='')
+    app = Flask(__name__)
 
-    #Database configuration
+    # Database configuration
     database_url = os.environ.get('DATABASE_URL', 'sqlite:///mediarepo.db')
 
     # Fix for Render PostgreSQL URL
@@ -28,11 +21,16 @@ def create_app():
     app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024
     app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg', 'gif', 'mp4', 'mov', 'avi', 'pdf', 'doc', 'docx'}
     
-    # Initialize CORS
+    # CORS - Allow your frontend URL
     frontend_url = os.environ.get('FRONTEND_URL', 'http://localhost:5173')
     CORS(app, resources={
         r"/api/*": {
-            "origins": [frontend_url, "http://localhost:5173", "http://localhost:3000"],
+            "origins": [
+                frontend_url,
+                "http://localhost:5173",
+                "http://localhost:3000",
+                "https://chuna-intranet-2.onrender.com"  # Your frontend
+            ],
             "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
             "allow_headers": ["Content-Type", "Authorization"],
             "supports_credentials": True
@@ -42,12 +40,29 @@ def create_app():
     # Initialize extensions
     db.init_app(app)
     jwt.init_app(app)
-    migrate.init_app(app, db)  
+    migrate.init_app(app, db)
     
     # Create upload folder
     os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
     
-    # Register API blueprints FIRST
+    # Health check routes
+    @app.route('/')
+    def home():
+        return jsonify({
+            'status': 'ok',
+            'message': 'Chuna Intranet API is running',
+            'version': '1.0',
+            'endpoints': {
+                'health': '/health',
+                'api': '/api/*'
+            }
+        })
+    
+    @app.route('/health')
+    def health():
+        return jsonify({'status': 'healthy'})
+    
+    # Register API blueprints - ✅ Remove 'server.' prefix
     from server.routes.auth import auth_bp
     from server.routes.repositories import repositories_bp
     from server.routes.files import files_bp
@@ -60,25 +75,12 @@ def create_app():
     app.register_blueprint(share_bp, url_prefix='/api/share')
     app.register_blueprint(admin_bp)
     
-    # Debug logging
-    print(f"BASE_DIR: {BASE_DIR}")
-    print(f"Static folder: {app.static_folder}")
-    print(f"Static folder exists: {os.path.exists(app.static_folder) if app.static_folder else False}")
-    if app.static_folder and os.path.exists(app.static_folder):
-        print(f"Static folder contents: {os.listdir(app.static_folder)}")
-    
-    # Serve React App - MUST BE LAST
-    @app.route('/', defaults={'path': ''})
-    @app.route('/<path:path>')
-    def serve(path):
-        if not app.static_folder or not os.path.exists(app.static_folder):
-            return {'error': 'Frontend not built'}, 500
-            
-        # Serve static files if they exist
-        if path and os.path.exists(os.path.join(app.static_folder, path)):
-            return send_from_directory(app.static_folder, path)
-        # Otherwise serve index.html
-        return send_from_directory(app.static_folder, 'index.html')
+    # Log registered routes
+    print("=" * 50)
+    print("Registered Routes:")
+    for rule in app.url_map.iter_rules():
+        print(f"  {rule.endpoint}: {rule.rule} [{', '.join(rule.methods - {'HEAD', 'OPTIONS'})}]")
+    print("=" * 50)
     
     return app
 
