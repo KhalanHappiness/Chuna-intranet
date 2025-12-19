@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { Download, Upload, Eye, Edit, Shield, AlertCircle, Image, Video, FileText } from 'lucide-react';
 import { getSharedRepository, uploadFile } from '../api';
+import { API_BASE_URL } from '../api'; 
 import axios from 'axios';
 
 const SharedLinkView = () => {
@@ -15,36 +16,37 @@ const SharedLinkView = () => {
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [email, setEmail] = useState('');
 
+
   useEffect(() => {
     loadSharedRepository();
   }, [token]);
 
- const loadSharedRepository = async (userEmail = null) => {
-    if (!token) {
-      setError('No share token provided');
+const loadSharedRepository = async (userEmail = null) => {
+  if (!token) {
+    setError('No share token provided');
+    setLoading(false);
+    return;
+  }
+
+  try {
+    console.log('Fetching shared repo with token:', token);
+    const response = await (userEmail 
+      ? axios.post(`${API_BASE_URL}/api/share/${token}`, { email: userEmail })
+      : getSharedRepository(token)
+    );
+
+    if (response.data?.requires_email && !userEmail) {
+      setShowEmailModal(true);
       setLoading(false);
       return;
     }
 
-  try {
-    console.log('Fetching shared repo with token:', token); // Debug log
-    const response = await (userEmail 
-        ? axios.post(`https://chuna-intranet.onrender.com/api/share/${token}`, { email: userEmail })
-        : getSharedRepository(token)
-      );
-
-    if (response.data?.requires_email && !userEmail) {
-        setShowEmailModal(true);
-        setLoading(false);
-        return;
-      }
-
-    console.log('Response:', response.data); // Debug log
+    console.log('Response:', response.data);
     setRepository(response.data);
     setPermission(response.data.permission);
     setLoading(false);
   } catch (err) {
-    console.error('Error loading shared repository:', err); // Debug log
+    console.error('Error loading shared repository:', err);
     setError(err.response?.data?.error || 'Unable to load repository');
     setLoading(false);
   }
@@ -79,9 +81,9 @@ const EmailModal = () => (
     </div>
   );
 
- const handleDownload = async (fileId, filename) => {
+const handleDownload = async (fileId, filename) => {
   try {
-    const response = await fetch(`https://chuna-intranet.onrender.com/api/files/${fileId}/download`, {
+    const response = await fetch(`${API_BASE_URL}/api/files/${fileId}/download`, {
       method: 'GET',
     });
     
@@ -102,6 +104,7 @@ const EmailModal = () => (
     console.error('Error downloading file:', error);
   }
 };
+
 
   const getFileIcon = (type) => {
     if (type === 'jpg' || type === 'png' || type === 'gif') {

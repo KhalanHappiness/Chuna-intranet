@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Users, FolderOpen, Link2, Download, Settings as SettingsIcon, LogOut, Shield, Check, X, Eye, Trash2, Plus, Upload as UploadIcon, RotateCcw, Video, Image } from 'lucide-react';
 
-import api from '../api';
+import api, { API_BASE_URL } from '../api';
 
 const AdminDashboard = ({ onLogout, user }) => {
   const [activeTab, setActiveTab] = useState('users');
@@ -531,30 +531,30 @@ const RepositoriesTab = () => {
     }
   };
 
-  const handleDownload = async (fileId, filename) => {
-    try {
-      const response = await fetch(`http://localhost:5000/api/files/${fileId}/download`, {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
-        },
-      });
-      
-      if (response.ok) {
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
-      }
-    } catch (error) {
-      console.error('Error downloading file:', error);
+ const handleDownload = async (fileId, filename) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/files/${fileId}/download`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`,
+      },
+    });
+    
+    if (response.ok) {
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
     }
-  };
+  } catch (error) {
+    console.error('Error downloading file:', error);
+  }
+};
 
   const handleDeleteFile = async (fileId) => {
     if (!window.confirm('Are you sure you want to delete this file?')) return;
@@ -619,7 +619,7 @@ const RepositoriesTab = () => {
                 <div className="aspect-square bg-gray-100 flex items-center justify-center overflow-hidden relative">
                   {file.file_type === 'jpg' || file.file_type === 'png' || file.file_type === 'jpeg' ? (
                     <img 
-                      src={`http://localhost:5000/api/files/${file.id}/download`}
+                      src={`${API_BASE_URL}/api/files/${file.id}/download`}
                       alt={file.original_filename}
                       className="w-full h-full object-cover"
                     />

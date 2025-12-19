@@ -1,10 +1,9 @@
 import axios from 'axios';
 
-// Use environment variable, fallback to production URL
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://chuna-intranet.onrender.com/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://chuna-intranet.onrender.com';
 
 const api = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: `${API_BASE_URL}/api`,  // Add /api here
   headers: {
     'Content-Type': 'application/json',
   },
@@ -82,7 +81,7 @@ export const createShareLink = (repositoryId, permission, expiresInDays) => {
 };
 
 export const getSharedRepository = (token) => {
-  return axios.get(`${API_BASE_URL}/share/${token}`);
+  return axios.get(`${API_BASE_URL}/api/share/${token}`);
 };
 
 // Meetings
@@ -141,7 +140,10 @@ export const uploadLogo = (formData) => {
 
 // Get logos
 export const getLogos = () => {
-  return axios.get(`${API_BASE_URL}/settings/logos`);
+  return axios.get(`${API_BASE_URL}/api/settings/logos`);
 };
+
+// Export the base URL for use in components
+export { API_BASE_URL };
 
 export default api;

@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Upload, Share2, Video, Image, Plus, Settings, Users, Calendar, Eye, Edit, Shield, LogOut } from 'lucide-react';
 import { getRepositories, createRepository, getRepository, uploadFile, createShareLink } from '../api';
 import chunaLogo from '../assets/chuna.png'
+import { API_BASE_URL } from '../api'; 
 
 const Dashboard = ({ onLogout }) => {
   const [repositories, setRepositories] = useState([]);
@@ -430,7 +431,7 @@ const Dashboard = ({ onLogout }) => {
                       <div className="aspect-square bg-gray-200 flex items-center justify-center overflow-hidden">
                         {file.file_type === 'jpg' || file.file_type === 'png' || file.file_type === 'jpeg' ? (
                           <img 
-                            src={`http://localhost:5000/api/files/${file.id}/download`}
+                            src={`${API_BASE_URL}/api/files/${file.id}/download`}
                             alt={file.filename}
                             className="w-full h-full object-cover"
                           />
