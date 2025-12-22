@@ -1,4 +1,4 @@
-from app import create_app
+from server.app import create_app
 from server.models import User
 from server.extensions import db
 from werkzeug.security import generate_password_hash
