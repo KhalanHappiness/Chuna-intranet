@@ -1,2 +1,3 @@
 FLASK_APP=app:create_app
 FLASK_ENV=development
+DATABASE_URL=postgresql://chunaintranet_db_user:RAlUWZOJ2kSKPstr2xhF5pPPRrAgrwlJ@dpg-d518ntumcj7s73em3r8g-a.oregon-postgres.render.com/chunaintranet_db
