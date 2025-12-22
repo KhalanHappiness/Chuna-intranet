@@ -4,4 +4,4 @@ from flask_migrate import Migrate
 
 db = SQLAlchemy()
 jwt = JWTManager()
-migrate = Migrate()
+migrate = Migrate(directory='server/migrations')  
