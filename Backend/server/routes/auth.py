@@ -35,14 +35,28 @@ def register():
 @auth_bp.route('/login', methods=['POST'])
 def login():
     data = request.get_json()
-    user = User.query.filter_by(username=data['username']).first()
+    print(f"🔍 Login attempt - Username: {data.get('username')}")
     
-    if not user or not check_password_hash(user.password_hash, data['password']):
+    user = User.query.filter_by(username=data['username']).first()
+    print(f"🔍 User found: {user is not None}")
+    
+    if not user:
+        print("❌ User not found")
         return jsonify({'error': 'Invalid credentials'}), 401
+    
+    password_valid = check_password_hash(user.password_hash, data['password'])
+    print(f"🔍 Password valid: {password_valid}")
+    
+    if not password_valid:
+        print("❌ Invalid password")
+        return jsonify({'error': 'Invalid credentials'}), 401
+    
+    print(f"🔍 User approved: {user.is_approved}")
     
     if not user.is_approved:
         return jsonify({'error': 'Your account is pending approval'}), 403
     
+    print("✅ Creating access token")
     access_token = create_access_token(identity=user.id)
     
     return jsonify({
