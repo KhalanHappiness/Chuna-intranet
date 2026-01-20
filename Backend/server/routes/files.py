@@ -61,10 +61,34 @@ def upload_file(repo_id):
     
     return jsonify(file_obj.to_dict(include_uploader=True)), 201
 
-@files_bp.route('/files/<int:file_id>/download', methods=['GET'])
+@files_bp.route('/<int:file_id>/download', methods=['GET'])
 def download_file(file_id):
+    print(f"\n{'='*60}")
+    print(f"DOWNLOAD REQUEST RECEIVED")
+    print(f"File ID: {file_id}")
+    print(f"Request path: {request.path}")
+    print(f"Request args: {request.args}")
+    print(f"{'='*60}\n")
+    
     try:
-        file_obj = File.query.get_or_404(file_id)
+        file_obj = File.query.get(file_id)
+        
+        if not file_obj:
+            print(f"❌ ERROR: File with ID {file_id} not found in database")
+            return jsonify({'error': f'File with ID {file_id} not found'}), 404
+        
+        print(f"✅ Found file in database:")
+        print(f"   - Original filename: {file_obj.original_filename}")
+        print(f"   - Stored filename: {file_obj.filename}")
+        print(f"   - File path: {file_obj.file_path}")
+        print(f"   - Repository ID: {file_obj.repository_id}")
+        
+        # Check if file exists on disk
+        if not os.path.exists(file_obj.file_path):
+            print(f"❌ ERROR: File not found on disk at: {file_obj.file_path}")
+            return jsonify({'error': 'File not found on server'}), 404
+        
+        print(f"✅ File exists on disk")
         
         # Log the download
         share_token = request.args.get('share_token')
@@ -72,6 +96,7 @@ def download_file(file_id):
         
         if share_token:
             share_link = ShareLink.query.filter_by(token=share_token).first()
+            print(f"   - Share token found: {share_token}")
         
         download_log = DownloadLog(
             file_id=file_id,
@@ -82,13 +107,22 @@ def download_file(file_id):
         db.session.add(download_log)
         db.session.commit()
         
-        directory = os.path.dirname(file_obj.file_path)
+        print(f"✅ Download log created")
+        print(f"   - Sending file from: {os.path.dirname(file_obj.file_path)}")
+        print(f"   - Filename: {file_obj.filename}")
+        
+        directory = os.path.join(current_app.root_path, os.path.dirname(file_obj.file_path))
+
         return send_from_directory(
-            directory, 
-            file_obj.filename, 
-            as_attachment=True, 
+            directory,
+            file_obj.filename,
+            as_attachment=True,
             download_name=file_obj.original_filename
-        )
+)
     except Exception as e:
-        print(f"Download error: {e}")
-        return jsonify({'error': 'File not found'}), 404
+        print(f"\n❌ EXCEPTION in download_file:")
+        print(f"   Error type: {type(e).__name__}")
+        print(f"   Error message: {str(e)}")
+        import traceback
+        print(f"   Traceback:\n{traceback.format_exc()}")
+        return jsonify({'error': str(e)}), 500

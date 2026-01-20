@@ -25,7 +25,6 @@ def access_shared_repository(token):
         email = data.get('email')
 
     # Log the access
-    from models import LinkAccessLog
     access_log = LinkAccessLog(
         share_link_id=share_link.id,
         email=email,

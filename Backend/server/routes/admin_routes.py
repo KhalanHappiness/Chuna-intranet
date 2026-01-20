@@ -199,7 +199,7 @@ def delete_repository_admin(repo_id):
         repo = Repository.query.get_or_404(repo_id)
         
         # Import models
-        from models import File, ShareLink, Meeting, DownloadLog, LinkAccessLog
+        from server.models import File, ShareLink, Meeting, DownloadLog, LinkAccessLog
         
         # Delete in correct order (most dependent first)
         
@@ -301,7 +301,7 @@ def get_link_viewers(link_id):
     if not is_super_admin():
         return jsonify({'error': 'Super admin access required'}), 403
     
-    from models import LinkAccessLog
+    from server.models import LinkAccessLog
     viewers = LinkAccessLog.query.filter_by(share_link_id=link_id).order_by(LinkAccessLog.accessed_at.desc()).all()
     
     return jsonify([{

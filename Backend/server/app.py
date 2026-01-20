@@ -28,8 +28,10 @@ def create_app():
             "origins": [
                 frontend_url,
                 "http://localhost:5173",
+                "http://127.0.0.1:5173",   # ✅ ADD THIS
                 "http://localhost:3000",
-                "https://chuna-intranet.vercel.app"  # Your frontend
+                "http://127.0.0.1:3000",   # optional
+                "https://chuna-intranet.vercel.app"
             ],
             "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
             "allow_headers": ["Content-Type", "Authorization"],
@@ -74,7 +76,7 @@ def create_app():
     
     app.register_blueprint(auth_bp, url_prefix='/api')
     app.register_blueprint(repositories_bp, url_prefix='/api/repositories')
-    app.register_blueprint(files_bp, url_prefix='/api')
+    app.register_blueprint(files_bp, url_prefix='/api/files')
     app.register_blueprint(share_bp, url_prefix='/api/share')
     app.register_blueprint(admin_bp)
     
